@@ -1,0 +1,17 @@
+{
+  "name": "championships-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bk20dev/championships-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bk20dev/championships-backend/issues"
+  },
+  "homepage": "https://github.com/bk20dev/championships-backend#readme"
+}
