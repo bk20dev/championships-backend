@@ -7,7 +7,7 @@ const port = process.env.port || 3000;
 
 const playersService = new PlayersService();
 const playersController = new PlayersController(playersService);
-app.use(playersController.router);
+app.use("/players", playersController.router);
 
 app.listen(port, () => {
   console.log(`Server listening at ::${port}`);
