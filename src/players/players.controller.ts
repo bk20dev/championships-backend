@@ -1,5 +1,7 @@
 import { Handler, Router } from "express";
 import { PlayersService } from "./players.service";
+import { Player } from "../domain/Player";
+import { DataResponse, Response } from "../api/api";
 
 export class PlayersController {
   readonly router: Router;
@@ -9,14 +11,30 @@ export class PlayersController {
     this.router.get("/", this.getAll).get("/:id", this.getSingle);
   }
 
-  getAll: Handler = (req, res) => {
-    const allPlayers = this.service.getAll();
-    res.json(allPlayers).status(200);
+  getAll: Handler = async (req, res) => {
+    const allPlayers = await this.service.getAll();
+    const response: DataResponse<Player> = {
+      status: "ok", code: 200, data: allPlayers,
+    };
+    res.json(response).status(response.code);
   };
 
-  getSingle: Handler = (req, res) => {
+  getSingle: Handler = async (req, res) => {
     const { id } = req.params;
-    const player = this.service.getSingle(id);
-    res.json(player).status(200);
+    const player = await this.service.getSingle(id).catch(() => undefined);
+
+    if (!player) {
+      const response: Response = {
+        status: "error", code: 404,
+        message: "Player not found",
+      };
+      res.json(response).status(response.code);
+      return;
+    }
+
+    const response: DataResponse<Player> = {
+      status: "ok", code: 200, data: player,
+    };
+    res.json(response).status(response.code);
   };
 }

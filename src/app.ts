@@ -3,6 +3,7 @@ import { PlayersController as PlayersController } from "./players/players.contro
 import { PlayersService } from "./players/players.service";
 import { apiErrorHandler } from "./api/error";
 import { Client } from "pg";
+import { PlayersRepository } from "./players/players.repository";
 
 const app = express();
 const port = process.env.port || 3000;
@@ -11,7 +12,8 @@ const client = new Client();
 // noinspection JSIgnoredPromiseFromCall
 client.connect();
 
-const playersService = new PlayersService();
+const playersRepository = new PlayersRepository(client);
+const playersService = new PlayersService(playersRepository);
 const playersController = new PlayersController(playersService);
 app.use("/players", playersController.router);
 

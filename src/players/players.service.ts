@@ -1,13 +1,15 @@
 import { Player } from "src/domain/Player";
+import { PlayersRepository } from "./players.repository";
 
 export class PlayersService {
-  constructor() {}
-
-  getAll(): Player[] {
-    return [];
+  constructor(private readonly repository: PlayersRepository) {
   }
 
-  getSingle(id: string): Player | undefined {
-    return undefined;
+  getAll(): Promise<Player[]> {
+    return this.repository.getAll();
+  }
+
+  getSingle(id: string): Promise<Player | undefined> {
+    return this.repository.getSingle(id);
   }
 }
