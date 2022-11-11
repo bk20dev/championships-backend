@@ -10,5 +10,5 @@ export interface Response {
 
 export interface DataResponse<T>
   extends Response {
-  data: T | T[];
+  data: T;
 }
