@@ -18,6 +18,15 @@ export class PlayersRepository {
     return this.parsePlayer(player);
   }
 
+  async createSingle(player: Omit<Player, "id">): Promise<Player | undefined> {
+    const { firstName, lastName, dateOfBirth, position } = player;
+    const result = await this.client.query(CREATE_SINGLE, [
+      firstName, lastName, dateOfBirth, position,
+    ]);
+    const createdPlayer = result.rows[0];
+    return this.parsePlayer(createdPlayer);
+  }
+
   private parsePlayer = (entity: any): Player | undefined => {
     if (!entity || typeof entity !== "object") return undefined;
     const { id, first_name, last_name, position, date_of_birth } = entity;
@@ -38,4 +47,8 @@ const GET_ALL = `SELECT id, first_name, last_name, date_of_birth, position
 const GET_SINGLE = `SELECT id, first_name, last_name, date_of_birth, position
                     FROM public.player
                     WHERE id = $1`;
+const CREATE_SINGLE = `INSERT INTO public.player(first_name, last_name,
+                                                 date_of_birth, position)
+                       VALUES ($1, $2, $3, $4)
+                       RETURNING id, first_name, last_name, date_of_birth, position`;
 

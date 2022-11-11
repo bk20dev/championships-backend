@@ -12,6 +12,8 @@ const client = new Client();
 // noinspection JSIgnoredPromiseFromCall
 client.connect();
 
+app.use(express.json());
+
 const playersRepository = new PlayersRepository(client);
 const playersService = new PlayersService(playersRepository);
 const playersController = new PlayersController(playersService);

@@ -7,8 +7,10 @@ export class PlayersController {
   readonly router: Router;
 
   constructor(private readonly service: PlayersService) {
-    this.router = Router();
-    this.router.get("/", this.getAll).get("/:id", this.getSingle);
+    this.router = Router()
+      .get("/", this.getAll)
+      .get("/:id", this.getSingle)
+      .post("/", this.createSingle);
   }
 
   getAll: Handler = async (req, res) => {
@@ -25,8 +27,7 @@ export class PlayersController {
 
     if (!player) {
       const response: Response = {
-        status: "error", code: 404,
-        message: "Player not found",
+        status: "error", code: 404, message: "Player not found",
       };
       res.json(response).status(response.code);
       return;
@@ -34,6 +35,15 @@ export class PlayersController {
 
     const response: DataResponse<Player> = {
       status: "ok", code: 200, data: player,
+    };
+    res.json(response).status(response.code);
+  };
+
+  createSingle: Handler = async (req, res) => {
+    const player = req.body;
+    const createdPlayer = await this.service.createSingle(player);
+    const response: DataResponse<Player> = {
+      status: "ok", code: 201, data: createdPlayer,
     };
     res.json(response).status(response.code);
   };
