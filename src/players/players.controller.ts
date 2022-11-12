@@ -25,6 +25,14 @@ export class PlayersController {
     return { status: "ok", code: 201, data: createdPlayer };
   });
 
+  updateSingle: Handler = handleCatching<Player>(async (req) => {
+    const { id } = req.params;
+    const player = req.body;
+    const updatedPlayer = await this.service.updateSingle({ ...player, id });
+    if (!updatedPlayer) throw new ApiError("Player not found", 404);
+    return { status: "ok", code: 200, data: updatedPlayer };
+  });
+
   deleteSingle: Handler = handleCatching<Player>(async (req) => {
     const { id } = req.params;
     const player = await this.service.deleteSingle(id);
@@ -37,6 +45,7 @@ export class PlayersController {
       .get("/", this.getAll)
       .get("/:id", this.getSingle)
       .post("/", this.createSingle)
+      .put("/:id", this.updateSingle)
       .delete("/:id", this.deleteSingle);
   }
 }
