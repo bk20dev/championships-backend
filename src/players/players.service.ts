@@ -26,4 +26,8 @@ export class PlayersService {
       throw error;
     }
   }
+
+  deleteSingle(id: string): Promise<Player | undefined> {
+    return this.repository.deleteSingle(id);
+  }
 }

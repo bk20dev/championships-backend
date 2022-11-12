@@ -15,6 +15,7 @@ export class PlayersRepository {
   async getSingle(id: string): Promise<Player | undefined> {
     const result = await this.client.query(GET_SINGLE, [id]);
     const player = result.rows[0];
+    if (!player) return undefined;
     return this.parsePlayer(player);
   }
 
@@ -25,6 +26,13 @@ export class PlayersRepository {
     ]);
     const createdPlayer = result.rows[0];
     return this.parsePlayer(createdPlayer);
+  }
+
+  async deleteSingle(id: string): Promise<Player | undefined> {
+    const result = await this.client.query(DELETE_SINGLE, [id]);
+    const player = result.rows[0];
+    if (!player) return undefined;
+    return this.parsePlayer(player);
   }
 
   private parsePlayer = (entity: any): Player | undefined => {
@@ -51,4 +59,7 @@ const CREATE_SINGLE = `INSERT INTO public.player(first_name, last_name,
                                                  date_of_birth, position)
                        VALUES ($1, $2, $3, $4)
                        RETURNING id, first_name, last_name, date_of_birth, position`;
-
+const DELETE_SINGLE = `DELETE
+                       FROM public.player
+                       WHERE id = $1
+                       RETURNING id, first_name, last_name, date_of_birth, position`;

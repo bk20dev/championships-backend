@@ -25,10 +25,18 @@ export class PlayersController {
     return { status: "ok", code: 201, data: createdPlayer };
   });
 
+  deleteSingle: Handler = handleCatching<Player>(async (req) => {
+    const { id } = req.params;
+    const player = await this.service.deleteSingle(id);
+    if (!player) throw new ApiError("Player not found", 404);
+    return { status: "ok", code: 200, data: player };
+  });
+
   constructor(private readonly service: PlayersService) {
     this.router = Router()
       .get("/", this.getAll)
       .get("/:id", this.getSingle)
-      .post("/", this.createSingle);
+      .post("/", this.createSingle)
+      .delete("/:id", this.deleteSingle);
   }
 }
