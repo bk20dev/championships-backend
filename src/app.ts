@@ -4,6 +4,7 @@ import { PlayersService } from "./players/players.service";
 import { apiErrorHandler } from "./api/error";
 import { Client } from "pg";
 import { PlayersRepository } from "./players/players.repository";
+import { TeamsController } from "./teams/teams.controller";
 
 const app = express();
 const port = process.env.port || 3000;
@@ -18,6 +19,9 @@ const playersRepository = new PlayersRepository(client);
 const playersService = new PlayersService(playersRepository);
 const playersController = new PlayersController(playersService);
 app.use("/players", playersController.router);
+
+const teamsController = new TeamsController();
+app.use("/teams", teamsController.router);
 
 app.use(apiErrorHandler);
 
