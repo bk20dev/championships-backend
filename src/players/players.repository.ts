@@ -5,17 +5,31 @@ export class PlayersRepository {
   constructor(private readonly client: Client) {
   }
 
+  static parsePlayer(entity: any): Player | undefined {
+    if (!entity || typeof entity !== "object") return undefined;
+    const { id, first_name, last_name, position, date_of_birth } = entity;
+    const player = {
+      id,
+      firstName: first_name,
+      lastName: last_name,
+      position,
+      dateOfBirth: new Date(date_of_birth),
+    };
+    if (isPlayer(player)) return player;
+    return undefined;
+  };
+
   async getAll(): Promise<Player[]> {
     const result = await this.client.query(GET_ALL);
     return result.rows
-      .map(this.parsePlayer)
+      .map(PlayersRepository.parsePlayer)
       .filter(Boolean);
   }
 
   async getSingle(id: string): Promise<Player | undefined> {
     const result = await this.client.query(GET_SINGLE, [id]);
     const player = result.rows[0];
-    return this.parsePlayer(player);
+    return PlayersRepository.parsePlayer(player);
   }
 
   async createSingle(player: Omit<Player, "id">): Promise<Player | undefined> {
@@ -24,7 +38,7 @@ export class PlayersRepository {
       firstName, lastName, dateOfBirth, position,
     ]);
     const createdPlayer = result.rows[0];
-    return this.parsePlayer(createdPlayer);
+    return PlayersRepository.parsePlayer(createdPlayer);
   }
 
   async updateSingle(player: Player): Promise<Player | undefined> {
@@ -33,28 +47,14 @@ export class PlayersRepository {
       id, firstName, lastName, dateOfBirth, position,
     ]);
     const updatedPlayer = result.rows[0];
-    return this.parsePlayer(updatedPlayer);
+    return PlayersRepository.parsePlayer(updatedPlayer);
   }
 
   async deleteSingle(id: string): Promise<Player | undefined> {
     const result = await this.client.query(DELETE_SINGLE, [id]);
     const player = result.rows[0];
-    return this.parsePlayer(player);
+    return PlayersRepository.parsePlayer(player);
   }
-
-  private parsePlayer = (entity: any): Player | undefined => {
-    if (!entity || typeof entity !== "object") return undefined;
-    const { id, first_name, last_name, position, date_of_birth } = entity;
-    const player = {
-      id,
-      firstName: first_name,
-      lastName: last_name,
-      position,
-      dateOfBirth: date_of_birth,
-    };
-    if (isPlayer(player)) return player;
-    return undefined;
-  };
 }
 
 const GET_ALL = `SELECT id, first_name, last_name, date_of_birth, position
