@@ -33,6 +33,12 @@ export class TeamsRepository {
     const team = result.rows[0];
     return TeamsRepository.parseTeam(team);
   }
+
+  async deleteSingle(id: string): Promise<TeamWithPlayers | undefined> {
+    const result = await this.client.query(DELETE_SINGLE, [id]);
+    const team = result.rows[0];
+    return TeamsRepository.parseTeam(team);
+  }
 }
 
 const GET_ALL = `SELECT t.id, t.name, array_to_json(array_agg(p.*)) players
@@ -46,3 +52,7 @@ const GET_SINGLE = `SELECT t.id, t.name, array_to_json(array_agg(p.*)) players
                              JOIN player p ON tp.player_id = p.id
                     WHERE t.id = $1
                     GROUP BY t.id;`;
+const DELETE_SINGLE = `DELETE
+                       FROM public.team
+                       WHERE id = $1
+                       RETURNING id, name`;
