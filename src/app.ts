@@ -1,34 +1,37 @@
 import * as express from "express";
-import { PlayersController as PlayersController } from "./players/players.controller";
-import { PlayersService } from "./players/players.service";
 import { apiErrorHandler } from "./api/error";
-import { Client } from "pg";
-import { PlayersRepository } from "./players/players.repository";
+import { PlayersService } from "./players/players.service";
+import { PlayersController } from "./players/players.controller";
+import sequelize from "./sequelize";
 import { TeamsController } from "./teams/teams.controller";
 import { TeamsService } from "./teams/teams.service";
-import { TeamsRepository } from "./teams/teams.repository";
+import { Team } from "./models/Team";
+import { Player } from "./models/Player";
 
 const app = express();
 const port = process.env.port || 3000;
 
-const client = new Client();
-// noinspection JSIgnoredPromiseFromCall
-client.connect();
-
 app.use(express.json());
 
-const playersRepository = new PlayersRepository(client);
-const playersService = new PlayersService(playersRepository);
+const playersService = new PlayersService();
 const playersController = new PlayersController(playersService);
 app.use("/players", playersController.router);
 
-const teamsRepository = new TeamsRepository(client);
-const teamsService = new TeamsService(teamsRepository);
+const teamsService = new TeamsService();
 const teamsController = new TeamsController(teamsService);
 app.use("/teams", teamsController.router);
 
 app.use(apiErrorHandler);
 
-app.listen(port, () => {
-  console.log(`Server listening at ::${port}`);
+const bootstrap = async (): Promise<void> => {
+  Team.belongsToMany(Player, { as: "players", through: "PlayerTeam" });
+  Player.belongsToMany(Team, { as: "teams", through: "PlayerTeam" });
+  await sequelize.sync({});
+};
+
+bootstrap().then(() => {
+  app.listen(port, () => {
+    console.log(`Server listening at ::${port}`);
+  });
 });
+

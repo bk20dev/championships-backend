@@ -1,24 +1,30 @@
-import { TeamsRepository } from "./teams.repository";
-import { Team } from "../domain/Team";
-import { Player } from "../domain/Player";
-import { DatabaseError } from "pg";
-import { ApiError } from "../api/error";
+import { Team as DomainTeam } from "../domain/Team";
+import { Player as DomainPlayer } from "../domain/Player";
+import { Team } from "../models/Team";
+import { Player } from "../models/Player";
+import { isInvalidUuidError } from "../api/util";
 
 export class TeamsService {
-  constructor(private readonly repository: TeamsRepository) {
+  constructor() {
   }
 
-  getAll(): Promise<TeamWithPlayers[]> {
-    return this.repository.getAll();
+  async getAll(): Promise<DomainTeam[]> {
+    const teams = await Team.findAll();
+    return teams.map(it => it.dataValues);
   }
 
   async getSingle(id: string): Promise<TeamWithPlayers | undefined> {
     try {
-      return await this.repository.getSingle(id);
+      const team = await Team.findByPk(id, {
+        include: {
+          model: Player, as: "players",
+          through: { attributes: [] },
+        },
+      });
+      return team?.dataValues;
     } catch (error) {
-      if (error instanceof DatabaseError && error.code == "22P02") {
-        const message = "Invalid id";
-        throw new ApiError(message, 400);
+      if (isInvalidUuidError(error)) {
+        return undefined;
       }
       throw error;
     }
@@ -26,17 +32,24 @@ export class TeamsService {
 
   async deleteSingle(id: string): Promise<TeamWithPlayers | undefined> {
     try {
-      const team = await this.repository.getSingle(id);
-      await this.repository.deleteSingle(id);
-      return team;
+      const team = await Team.findByPk(id, {
+        include: {
+          model: Player, as: "players",
+          through: { attributes: [] },
+        },
+      });
+      if (!team) {
+        return undefined;
+      }
+      await team.destroy();
+      return team.dataValues;
     } catch (error) {
-      if (error instanceof DatabaseError && error.code == "22P02") {
-        const message = "Invalid id";
-        throw new ApiError(message, 400);
+      if (isInvalidUuidError(error)) {
+        return undefined;
       }
       throw error;
     }
   }
 }
 
-export type TeamWithPlayers = Team | { players: Player[] }
+export type TeamWithPlayers = DomainTeam | { players: DomainPlayer[] }
