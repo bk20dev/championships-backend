@@ -1,50 +1,65 @@
-import { Player } from "../domain/Player";
-import { PlayersRepository } from "./players.repository";
-import { DatabaseError } from "pg";
+import { Player as DomainPlayer } from "../domain/Player";
+import { Player } from "../models/Player";
+import { UniqueConstraintError, ValidationError } from "sequelize";
 import { ApiError } from "../api/error";
 
 export class PlayersService {
-  constructor(private readonly repository: PlayersRepository) {
+  constructor() {
   }
 
-  getAll(): Promise<Player[]> {
-    return this.repository.getAll();
+  async getAll(): Promise<DomainPlayer[]> {
+    const players = await Player.findAll();
+    return players.map(it => it.dataValues);
   }
 
-  getSingle(id: string): Promise<Player | undefined> {
-    return this.repository.getSingle(id);
+  async getSingle(id: string): Promise<DomainPlayer | undefined> {
+    const player = await Player.findByPk(id)
+      .catch(() => undefined);
+    return player?.dataValues;
   }
 
-  async createSingle(player: any): Promise<Player> {
+  async createSingle(body: any): Promise<DomainPlayer> {
     try {
-      return await this.repository.createSingle(player);
+      const player = await Player.create(body);
+      return player.dataValues;
     } catch (error) {
-      if (error instanceof DatabaseError && error.code === "23502") {
-        const message = "Player validation failed";
-        throw new ApiError(message, 400);
+      if (error instanceof UniqueConstraintError) {
+        throw new ApiError("This player already exists", 409);
+      }
+      if (error instanceof ValidationError) {
+        const errors = error.errors.map(it => [it.path, it.message]);
+        throw new ApiError("Validation error", 422, Object.fromEntries(errors));
       }
       throw error;
     }
   }
 
-  async updateSingle(player: any): Promise<Player | undefined> {
+  async updateSingle(changes: any): Promise<DomainPlayer | undefined> {
+    const player = await Player.findByPk(changes.id)
+      .catch(() => undefined);
+    if (!player) {
+      return undefined;
+    }
+
     try {
-      return await this.repository.updateSingle(player);
+      await player.update(changes);
+      return player.dataValues;
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        if (error.code === "23502") {
-          const message = "Player validation failed";
-          throw new ApiError(message, 400);
-        } else if (error.code === "22P02") {
-          const message = "Invalid id";
-          throw new ApiError(message, 400);
-        }
+      if (error instanceof ValidationError) {
+        const errors = error.errors.map(it => [it.path, it.message]);
+        throw new ApiError("Validation error", 422, Object.fromEntries(errors));
       }
       throw error;
     }
   }
 
-  deleteSingle(id: string): Promise<Player | undefined> {
-    return this.repository.deleteSingle(id);
+  async deleteSingle(id: string): Promise<DomainPlayer | undefined> {
+    const player = await Player.findByPk(id)
+      .catch(() => undefined);
+    if (!player) {
+      return undefined;
+    }
+    await player.destroy();
+    return player.dataValues;
   }
 }
