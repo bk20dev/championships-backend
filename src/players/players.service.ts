@@ -2,6 +2,7 @@ import { Player as DomainPlayer } from "../domain/Player";
 import { Player } from "../models/Player";
 import { UniqueConstraintError, ValidationError } from "sequelize";
 import { ApiError } from "../api/error";
+import { isInvalidUuidError } from "../api/util";
 
 export class PlayersService {
   constructor() {
@@ -13,9 +14,15 @@ export class PlayersService {
   }
 
   async getSingle(id: string): Promise<DomainPlayer | undefined> {
-    const player = await Player.findByPk(id)
-      .catch(() => undefined);
-    return player?.dataValues;
+    try {
+      const player = await Player.findByPk(id);
+      return player?.dataValues;
+    } catch (error) {
+      if (isInvalidUuidError(error)) {
+        return undefined;
+      }
+      throw error;
+    }
   }
 
   async createSingle(body: any): Promise<DomainPlayer> {
@@ -35,16 +42,17 @@ export class PlayersService {
   }
 
   async updateSingle(changes: any): Promise<DomainPlayer | undefined> {
-    const player = await Player.findByPk(changes.id)
-      .catch(() => undefined);
-    if (!player) {
-      return undefined;
-    }
-
     try {
+      const player = await Player.findByPk(changes.id);
+      if (!player) {
+        return undefined;
+      }
       await player.update(changes);
       return player.dataValues;
     } catch (error) {
+      if (isInvalidUuidError(error)) {
+        return undefined;
+      }
       if (error instanceof ValidationError) {
         const errors = error.errors.map(it => [it.path, it.message]);
         throw new ApiError("Validation error", 422, Object.fromEntries(errors));
@@ -54,12 +62,18 @@ export class PlayersService {
   }
 
   async deleteSingle(id: string): Promise<DomainPlayer | undefined> {
-    const player = await Player.findByPk(id)
-      .catch(() => undefined);
-    if (!player) {
-      return undefined;
+    try {
+      const player = await Player.findByPk(id);
+      if (!player) {
+        return undefined;
+      }
+      await player.destroy();
+      return player.dataValues;
+    } catch (error) {
+      if (isInvalidUuidError(error)) {
+        return undefined;
+      }
+      throw error;
     }
-    await player.destroy();
-    return player.dataValues;
   }
 }
