@@ -1,5 +1,3 @@
-import { Object } from "../api/api";
-
 export interface Team {
   readonly id: string;
   name: string;
@@ -7,7 +5,7 @@ export interface Team {
 
 export const isTeam = (entity: unknown): entity is Team => {
   if (!entity || typeof entity !== "object") return false;
-  const { id, name } = entity as Object;
+  const { id, name } = entity as { [key: string]: unknown };
   if (!id || typeof id !== "string") return false;
   return !(!name || typeof name !== "string");
 };
