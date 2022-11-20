@@ -19,14 +19,18 @@ export const Player = sequelize.define<Model<DomainPlayer>>("Player", {
     type: STRING,
     allowNull: false,
   },
-  position: {
-    type: ENUM(...playerPositions),
+  club: {
+    type: STRING,
     allowNull: false,
-    validate: { isIn: [playerPositions] },
   },
   dateOfBirth: {
     type: DATEONLY,
     allowNull: false,
     validate: { isDate: true },
+  },
+  position: {
+    type: ENUM(...playerPositions),
+    allowNull: false,
+    validate: { isIn: [playerPositions] },
   },
 });
